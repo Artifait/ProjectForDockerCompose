@@ -1,0 +1,37 @@
+﻿@page
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+<input type="text" id="newItem" placeholder="Name" />
+<button onclick="addItem()">Add</button>
+
+<h2>Items</h2>
+<ul id="items"></ul>
+
+@section Scripts {
+    <script>
+        const api = '@Configuration["BackendApi"]';
+
+        async function load() {
+            try {
+                const res = await fetch(api);
+                const items = await res.json();
+                document.getElementById('items').innerHTML = items.map(i => `<li>${i.name}</li>`).join('');
+            } catch (err) {
+                document.getElementById('items').innerHTML = '<li style="color:red;">Failed to load items.</li>';
+            }
+        }
+
+        async function addItem() {
+            const name = document.getElementById('newItem').value;
+            await fetch(api, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            load();
+        }
+
+        load();
+    </script>
+}

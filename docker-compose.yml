@@ -1,0 +1,24 @@
+﻿version: '3.8'  # Версия синтаксиса docker-compose (3.8 — стабильная и совместимая с большинством фич)
+
+services:
+  backend:  # Имя сервиса — можно использовать как DNS внутри сети, например http://backend
+    build:
+      context: ./backend      # Путь к директории с исходниками бэкенда
+      dockerfile: Dockerfile  # Имя Dockerfile (по умолчанию можно опустить)
+    ports:
+      - "5000:80"             # Проброс портов: хост:контейнер. 5000 на хосте → 80 в контейнере (Kestrel)
+    environment:
+      - ASPNETCORE_URLS=http://+:80  # ASP.NET будет слушать на 0.0.0.0:80 (внешние подключения)
+    volumes:
+      - ./backend/Data:/app/Data  # Монтирует папку Data, чтобы база SQLite сохранялась вне контейнера, для того чтоб можно было спокойно его пересоздать без потери данных
+
+  frontend:
+    build:
+      context: ./frontend      # Путь к директории с фронтендом
+      dockerfile: Dockerfile   # Файл сборки Docker (тоже по умолчанию можно не указывать)
+    depends_on:
+      - backend                # Указывает, что frontend должен запускаться после backend
+    ports:
+      - "18000:8080"           # Проброс: 18000 на хосте → 8080 в контейнере (на котором Razor Pages слушают)
+    environment:
+      - BackendApi=http://localhost:5000/api/items
